@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Activity,
@@ -28,6 +29,21 @@ import {
 } from "recharts";
 import { KpiCard } from "@/components/neuro/KpiCard";
 import { SectionHeader } from "@/components/neuro/SectionHeader";
+
+interface Sector {
+  sector_id: string;
+  sector_name: string;
+  traffic: number;
+  aqi: number;
+  energy_usage: number;
+  population: number;
+  infrastructure_health: number;
+}
+
+interface DashboardResponse {
+  city: string;
+  sectors: Sector[];
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -78,6 +94,53 @@ const insights = [
 ];
 
 function OverviewPage() {
+  const [dashboardData, setDashboardData] =
+    useState<DashboardResponse | null>(null);
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+
+    fetch("http://localhost:8000/dashboard")
+      .then((res) => res.json())
+      .then((data) => {
+        setDashboardData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-10">
+        Loading NeuroCity...
+      </div>
+    );
+  }
+
+  const avgTraffic = dashboardData
+    ? Math.round(
+        dashboardData.sectors.reduce(
+          (sum, sector) => sum + sector.traffic,
+          0
+        ) / dashboardData.sectors.length
+      )
+    : 0;
+
+  const avgAQI = dashboardData
+    ? Math.round(
+        dashboardData.sectors.reduce(
+          (sum, sector) => sum + sector.aqi,
+          0
+        ) / dashboardData.sectors.length
+      )
+    : 0;
+
+  console.log(dashboardData);
   return (
     <div className="mx-auto max-w-[1400px] space-y-8">
       {/* Welcome */}
@@ -184,8 +247,8 @@ function OverviewPage() {
           description="Real-time indicators across mobility, environment, and infrastructure."
         />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          <KpiCard label="Traffic Index" value="62" delta={4.2} trend={trafficTrend} icon={Activity} tone="traffic" status="Moderate" />
-          <KpiCard label="AQI" value="118" delta={-3.1} trend={[120,124,118,115,119,121,118,114,118]} icon={Wind} tone="environment" status="Unhealthy" />
+          <KpiCard label="Traffic Index" value={String(avgTraffic)} delta={4.2} trend={trafficTrend} icon={Activity} tone="traffic" status="Moderate" />
+          <KpiCard label="AQI" value={String(avgAQI)} delta={-3.1} trend={[120,124,118,115,119,121,118,114,118]} icon={Wind} tone="environment" status="Unhealthy" />
           <KpiCard label="Energy Demand" value="4.2" unit="GW" delta={2.8} trend={[3.8,3.9,4.0,4.1,4.0,4.2,4.2,4.3,4.2]} icon={Zap} tone="ai" status="Peak" />
           <KpiCard label="Water Usage" value="612" unit="ML" delta={-1.4} trend={[640,634,628,625,620,618,615,612]} icon={Droplets} tone="info" status="Normal" />
           <KpiCard label="Infra Health" value="91%" delta={0.6} trend={[88,89,90,90,91,91,91,92,91]} icon={Building2} tone="success" status="Stable" />
