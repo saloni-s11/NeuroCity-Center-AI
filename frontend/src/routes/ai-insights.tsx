@@ -1,115 +1,173 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Brain, ShieldAlert, Sparkles, TrendingUp } from "lucide-react";
+import { useBriefing, useRecommendations } from "@/hooks/useNarration";
 import { PageHeader, SectionHeader } from "@/components/neuro/SectionHeader";
+import { Loader2, ArrowUpRight, ArrowDownRight, Minus, AlertCircle, CheckCircle2, Zap, BrainCircuit, Activity } from "lucide-react";
 
 export const Route = createFileRoute("/ai-insights")({
-  head: () => ({ meta: [{ title: "AI Insights · NeuroCity" }] }),
-  component: AIPage,
+  head: () => ({ meta: [{ title: "AI Narrator · NeuroCity" }] }),
+  component: AIInsightsPage,
 });
 
-const recs = [
-  {
-    title: "Activate sprinkler grid in Sector 3",
-    body: "PM2.5 forecast to exceed 160 µg/m³ for 6 hours. Sprinklers + traffic diversion reduce exposure by 38%.",
-    priority: "Critical",
-    impact: 92,
-    confidence: 94,
-    tone: "var(--color-risk)",
-    icon: ShieldAlert,
-  },
-  {
-    title: "Pre-cool transformers T-44 to T-49",
-    body: "Forecast 38°C peak Thursday. Pre-cooling prevents projected 2.1% load shedding.",
-    priority: "High",
-    impact: 78,
-    confidence: 88,
-    tone: "var(--color-traffic)",
-    icon: TrendingUp,
-  },
-  {
-    title: "Extend Blue Line metro to Whitefield",
-    body: "Capex ₹2,400 Cr · Reduces peak traffic by 11.2% · 4.2-year payback at current ridership growth.",
-    priority: "Strategic",
-    impact: 86,
-    confidence: 81,
-    tone: "var(--color-ai)",
-    icon: Brain,
-  },
-  {
-    title: "Subsidise rooftop solar in H-Ward",
-    body: "Adds 220 MW renewable capacity by 2028 and cuts carbon by 4.8%. ROI positive in year 6.",
-    priority: "Policy",
-    impact: 70,
-    confidence: 79,
-    tone: "var(--color-environment)",
-    icon: Sparkles,
-  },
-];
+function TrendCard({ trend }: { trend: any }) {
+  const Icon = trend.icon_hint === "up" ? ArrowUpRight : trend.icon_hint === "down" ? ArrowDownRight : Minus;
+  const color = trend.icon_hint === "up" ? "text-[var(--color-risk)]" : trend.icon_hint === "down" ? "text-[var(--color-success)]" : "text-muted-foreground";
 
-function AIPage() {
+  // Exception for temperature/energy where up isn't strictly 'risk' unless very high, but keeping it simple
+  
   return (
-    <div className="mx-auto max-w-[1400px] space-y-8">
-      <PageHeader title="AI Insights" subtitle="Ranked recommendations from the urban reasoning engine." />
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {recs.map((r) => (
-          <article key={r.title} className="card-surface p-6">
-            <div className="flex items-center justify-between">
-              <span
-                className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold"
-                style={{ backgroundColor: `color-mix(in oklab, ${r.tone} 14%, transparent)`, color: r.tone }}
-              >
-                <r.icon className="h-3 w-3" /> {r.priority}
-              </span>
-              <span className="text-[11px] text-muted-foreground">Updated 8m ago</span>
-            </div>
-            <h3 className="mt-4 text-lg font-semibold leading-snug">{r.title}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{r.body}</p>
-
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <Meter label="Impact" value={r.impact} color={r.tone} />
-              <Meter label="Confidence" value={r.confidence} color="var(--color-ai)" />
-            </div>
-
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <button className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs hover:bg-secondary">
-                Dismiss
-              </button>
-              <button className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-semibold text-background hover:opacity-90">
-                Approve action
-              </button>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <div className="card-surface p-6">
-        <SectionHeader eyebrow="Narrative engine" title="Executive briefing" description="Charts translated into plain language for decision makers." />
-        <div className="mt-4 space-y-3">
-          {[
-            "Air quality is expected to worsen in northern districts over the next seven days, with PM2.5 likely to peak Thursday afternoon.",
-            "Traffic congestion around the commercial district is likely due to construction activity coinciding with morning commuter patterns.",
-            "If current EV adoption continues, the city is on track to displace 9.4% of fossil-fuel vehicle-kilometers by 2028.",
-          ].map((s) => (
-            <div key={s} className="rounded-xl border border-border bg-background/60 px-4 py-3 text-sm leading-relaxed">
-              {s}
-            </div>
-          ))}
+    <div className="card-surface p-5 hover:bg-secondary/50 transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-semibold">{trend.metric}</span>
+        <div className={`p-1.5 rounded-full bg-secondary ${color}`}>
+          <Icon className="h-4 w-4" />
         </div>
+      </div>
+      <div className="text-2xl font-light mb-2">{trend.value}</div>
+      <p className="text-xs text-muted-foreground leading-relaxed">{trend.explanation}</p>
+    </div>
+  );
+}
+
+function RecommendationCard({ rec, index }: { rec: any; index: number }) {
+  const priorityColors = {
+    Critical: "bg-[var(--color-risk)] text-white",
+    High: "bg-[var(--color-traffic)] text-black",
+    Strategic: "bg-[var(--color-info)] text-white",
+    Policy: "bg-secondary text-foreground border border-border"
+  };
+
+  return (
+    <div className="card-surface p-6 relative overflow-hidden group">
+      <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-border)] group-hover:bg-[var(--color-info)] transition-colors" />
+      
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${priorityColors[rec.priority as keyof typeof priorityColors]}`}>
+              {rec.priority}
+            </span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-secondary text-muted-foreground">
+              {rec.category}
+            </span>
+          </div>
+          <h3 className="text-lg font-semibold leading-tight">{rec.title}</h3>
+        </div>
+        
+        <div className="flex gap-4 text-right shrink-0">
+          <div>
+            <div className="text-xl font-light">{rec.impact}/100</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Impact</div>
+          </div>
+          <div>
+            <div className="text-xl font-light text-[var(--color-ai)]">{rec.confidence}%</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Confidence</div>
+          </div>
+        </div>
+      </div>
+      
+      <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+        {rec.body}
+      </p>
+      
+      <div className="bg-secondary/50 rounded p-3 mb-5 border border-border/50">
+        <div className="text-xs font-semibold text-foreground mb-1 flex items-center gap-1.5">
+          <Zap className="h-3.5 w-3.5 text-[var(--color-success)]" /> Expected Benefit
+        </div>
+        <div className="text-xs text-muted-foreground">{rec.estimated_benefit}</div>
+      </div>
+      
+      <div className="flex gap-3">
+        <button className="px-4 py-2 bg-foreground text-background text-xs font-medium rounded hover:opacity-90 transition-opacity">
+          Approve Action
+        </button>
+        <button className="px-4 py-2 border border-border text-foreground text-xs font-medium rounded hover:bg-secondary transition-colors">
+          Dismiss
+        </button>
       </div>
     </div>
   );
 }
 
-function Meter({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div>
-      <div className="flex justify-between text-[11px] text-muted-foreground">
-        <span>{label}</span>
-        <span className="font-mono">{value}</span>
+function AIInsightsPage() {
+  const { data: briefing, isLoading: briefingLoading } = useBriefing();
+  const { data: recommendations, isLoading: recsLoading } = useRecommendations();
+
+  if (briefingLoading || recsLoading) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="text-sm">Synthesizing city intelligence...</span>
       </div>
-      <div className="mt-1 h-1.5 rounded-full bg-secondary">
-        <div className="h-full rounded-full" style={{ width: `${value}%`, background: color }} />
+    );
+  }
+
+  if (!briefing || !recommendations) return null;
+
+  return (
+    <div className="mx-auto max-w-[1400px] space-y-8 pb-12">
+      <PageHeader title="AI Narrator" subtitle="Executive summaries, trend explanations, and actionable recommendations generated by NeuroCity AI." />
+
+      {/* Executive Briefing */}
+      <div className="card-surface relative overflow-hidden p-8 border border-[var(--color-ai)]/30">
+        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+          <BrainCircuit className="h-48 w-48 text-[var(--color-ai)]" />
+        </div>
+        <div className="relative max-w-4xl">
+          <div className="flex items-center gap-2 text-[var(--color-ai)] mb-4">
+            <Activity className="h-5 w-5" />
+            <span className="text-xs font-bold uppercase tracking-widest">Executive Briefing</span>
+          </div>
+          <h2 className="text-3xl font-light tracking-tight leading-snug mb-6">
+            {briefing.executive_summary}
+          </h2>
+          
+          <div className="grid sm:grid-cols-2 gap-8 mt-8 border-t border-border/50 pt-8">
+            <div>
+              <h4 className="text-sm font-semibold flex items-center gap-2 mb-3 text-[var(--color-risk)]">
+                <AlertCircle className="h-4 w-4" /> Key Risks
+              </h4>
+              <ul className="space-y-2">
+                {briefing.key_risks.map((risk, i) => (
+                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <span className="text-[var(--color-risk)] mt-1">•</span> {risk}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold flex items-center gap-2 mb-3 text-[var(--color-success)]">
+                <CheckCircle2 className="h-4 w-4" /> Opportunities
+              </h4>
+              <ul className="space-y-2">
+                {briefing.opportunities.map((opp, i) => (
+                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <span className="text-[var(--color-success)] mt-1">•</span> {opp}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Trend Explanations */}
+      <div className="space-y-4">
+        <SectionHeader eyebrow="Analysis" title="Trend Explanations" />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {briefing.trends.map((trend, i) => (
+            <TrendCard key={i} trend={trend} />
+          ))}
+        </div>
+      </div>
+
+      {/* Recommendations */}
+      <div className="space-y-4 pt-4">
+        <SectionHeader eyebrow="Actions" title="Ranked Recommendations" />
+        <div className="grid lg:grid-cols-2 gap-6">
+          {recommendations.map((rec, i) => (
+            <RecommendationCard key={rec.id} rec={rec} index={i} />
+          ))}
+        </div>
       </div>
     </div>
   );

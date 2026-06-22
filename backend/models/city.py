@@ -234,3 +234,196 @@ class EnvForecastItem(BaseModel):
     tag: str             # AQI / Temperature / CO2 / Humidity / PM2.5
     horizon: str         # Next 24h / Next 3 days / Next 7 days
     type: str            # Risk / Opportunity
+
+
+# ─── Sustainability models ────────────────────────────────────────────────────
+
+class SectorHealthDetail(BaseModel):
+    """Health score breakdown for a single sector."""
+    sector_id: str
+    sector_name: str
+    health_score: float
+    traffic_score: float
+    aqi_score: float
+    infra_score: float
+    energy_score: float
+    status: str          # Healthy / Warning / Critical
+
+
+class SustainabilityHealthScore(BaseModel):
+    """GET /sustainability/health-score"""
+    overall_score: float
+    grade: str                             # A / B / C / D / F
+    description: str
+    sector_details: List[SectorHealthDetail]
+    components: dict                       # weighted breakdown
+
+
+class EnvironmentalMetrics(BaseModel):
+    """GET /sustainability/environmental-metrics"""
+    renewable_mix_pct: float
+    carbon_footprint: float               # tonnes CO2 equivalent
+    carbon_target: float
+    water_efficiency_pct: float
+    waste_diversion_pct: float
+    green_cover_pct: float
+    ev_penetration_pct: float
+    energy_per_capita: float
+    aqi_avg: float
+    sustainability_index: float           # composite 0-100
+
+
+class MonthlyTrend(BaseModel):
+    """One month's sustainability data point."""
+    month: str
+    sustainability_score: float
+    environmental: float
+    mobility: float
+    resource_efficiency: float
+    infrastructure: float
+
+
+class PillarScore(BaseModel):
+    """Score for one sustainability pillar."""
+    name: str
+    score: float
+    benchmark: float
+    delta: float           # vs benchmark
+    trend: str             # improving / stable / declining
+
+
+class PeerCity(BaseModel):
+    """Peer city comparison entry."""
+    name: str
+    score: float
+    rank: int
+
+
+class SustainabilityPerformance(BaseModel):
+    """GET /sustainability/performance"""
+    overall_score: float
+    trend_12m: List[MonthlyTrend]
+    pillars: List[PillarScore]
+    peer_comparison: List[PeerCity]
+    narrative: str
+
+
+# ─── Simulation models ───────────────────────────────────────────────────────
+
+class SimulationRequest(BaseModel):
+    """POST /simulation/run — request body."""
+    scenario: str          # population_growth / ev_adoption / renewable_energy / climate_event
+    params: dict           # scenario-specific parameters
+
+
+class SimulationImpact(BaseModel):
+    """One impact metric from a simulation."""
+    label: str
+    value: float
+    unit: str
+    delta_pct: float       # % change from baseline
+    tone: str              # positive / negative / neutral
+
+
+class SimulationResult(BaseModel):
+    """POST /simulation/run — response."""
+    scenario: str
+    scenario_label: str
+    params: dict
+    impacts: List[SimulationImpact]
+    narrative: str
+    risk_level: str        # Low / Medium / High / Critical
+    confidence: int
+    recommendations: List[str]
+
+
+class SimulationPreset(BaseModel):
+    """One preset scenario configuration."""
+    id: str
+    name: str
+    description: str
+    scenario: str
+    params: dict
+    tags: List[str]
+
+
+# ─── Narration models ────────────────────────────────────────────────────────
+
+class TrendExplanation(BaseModel):
+    """One trend explained in plain language."""
+    metric: str
+    direction: str         # rising / falling / stable
+    value: float
+    explanation: str
+    icon_hint: str         # up / down / neutral
+
+
+class NarrationBriefing(BaseModel):
+    """GET /narration/briefing"""
+    executive_summary: str
+    city_health: float
+    timestamp: str
+    trends: List[TrendExplanation]
+    key_risks: List[str]
+    opportunities: List[str]
+
+
+class NarrationRecommendation(BaseModel):
+    """One AI recommendation."""
+    id: str
+    title: str
+    body: str
+    priority: str          # Critical / High / Strategic / Policy
+    impact: int            # 0-100
+    confidence: int        # 0-100
+    category: str          # Traffic / Environment / Infrastructure / Energy
+    action_type: str       # immediate / short_term / long_term
+    estimated_benefit: str
+
+
+# ─── Timeline models ─────────────────────────────────────────────────────────
+
+class YearData(BaseModel):
+    """Projected metrics for one year."""
+    year: int
+    population_m: float
+    infra_score: float
+    traffic_index: float
+    pollution_index: float
+    energy_gw: float
+    sustainability_score: float
+    ev_pct: float
+    renewable_pct: float
+    green_cover_pct: float
+
+
+class TimelineProjection(BaseModel):
+    """GET /timeline/projections"""
+    start_year: int
+    end_year: int
+    data: List[YearData]
+    narrative: str
+
+
+class Scenario(BaseModel):
+    """One named scenario trajectory."""
+    name: str
+    description: str
+    color: str
+    data: List[YearData]
+
+
+class ScenarioComparison(BaseModel):
+    """GET /timeline/scenarios"""
+    scenarios: List[Scenario]
+    analysis: str
+
+
+class Milestone(BaseModel):
+    """A projected milestone event."""
+    year: int
+    title: str
+    description: str
+    category: str          # population / infrastructure / environment / energy
+    impact: str            # positive / negative / neutral
+    icon_hint: str

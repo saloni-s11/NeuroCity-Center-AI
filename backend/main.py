@@ -38,3 +38,19 @@ app.include_router(traffic_router)
 
 # Environment Intelligence routes: /environment/overview, /hotspots, /trends, /risks, /forecast
 app.include_router(environment_router)
+
+# Sustainability routes: /sustainability/health-score, /environmental-metrics, /performance
+from routes.sustainability import router as sustainability_router
+app.include_router(sustainability_router)
+
+# Simulation routes: /simulation/run, /presets
+from routes.simulation import router as simulation_router
+app.include_router(simulation_router)
+
+# Narration routes: /narration/briefing, /recommendations
+from routes.narration import router as narration_router
+app.include_router(narration_router)
+
+# Timeline routes: /timeline/projections, /scenarios, /milestones
+from routes.timeline import router as timeline_router
+app.include_router(timeline_router)

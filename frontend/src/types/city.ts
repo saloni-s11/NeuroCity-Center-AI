@@ -284,3 +284,184 @@ export interface EnvForecastItem {
   horizon: string;
   type: "Risk" | "Opportunity";
 }
+
+// ─── Sustainability ──────────────────────────────────────────────────────────
+
+export interface SectorHealthDetail {
+  sector_id: string;
+  sector_name: string;
+  health_score: number;
+  traffic_score: number;
+  aqi_score: number;
+  infra_score: number;
+  energy_score: number;
+  status: SectorStatus;
+}
+
+export interface SustainabilityHealthScore {
+  overall_score: number;
+  grade: string;
+  description: string;
+  sector_details: SectorHealthDetail[];
+  components: {
+    infrastructure: number;
+    traffic: number;
+    air_quality: number;
+    energy_efficiency: number;
+  };
+}
+
+export interface EnvironmentalMetrics {
+  renewable_mix_pct: number;
+  carbon_footprint: number;
+  carbon_target: number;
+  water_efficiency_pct: number;
+  waste_diversion_pct: number;
+  green_cover_pct: number;
+  ev_penetration_pct: number;
+  energy_per_capita: number;
+  aqi_avg: number;
+  sustainability_index: number;
+}
+
+export interface MonthlyTrend {
+  month: string;
+  sustainability_score: number;
+  environmental: number;
+  mobility: number;
+  resource_efficiency: number;
+  infrastructure: number;
+}
+
+export interface PillarScore {
+  name: string;
+  score: number;
+  benchmark: number;
+  delta: number;
+  trend: "improving" | "stable" | "declining";
+}
+
+export interface PeerCity {
+  name: string;
+  score: number;
+  rank: number;
+}
+
+export interface SustainabilityPerformance {
+  overall_score: number;
+  trend_12m: MonthlyTrend[];
+  pillars: PillarScore[];
+  peer_comparison: PeerCity[];
+  narrative: string;
+}
+
+// ─── Simulation ──────────────────────────────────────────────────────────────
+
+export type SimulationScenario = "population_growth" | "ev_adoption" | "renewable_energy" | "climate_event";
+
+export interface SimulationRequest {
+  scenario: SimulationScenario;
+  params: Record<string, any>;
+}
+
+export interface SimulationImpact {
+  label: string;
+  value: number;
+  unit: string;
+  delta_pct: number;
+  tone: "positive" | "negative" | "neutral";
+}
+
+export interface SimulationResult {
+  scenario: string;
+  scenario_label: string;
+  params: Record<string, any>;
+  impacts: SimulationImpact[];
+  narrative: string;
+  risk_level: "Low" | "Medium" | "High" | "Critical";
+  confidence: number;
+  recommendations: string[];
+}
+
+export interface SimulationPreset {
+  id: string;
+  name: string;
+  description: string;
+  scenario: SimulationScenario;
+  params: Record<string, any>;
+  tags: string[];
+}
+
+// ─── Narration ───────────────────────────────────────────────────────────────
+
+export interface TrendExplanation {
+  metric: string;
+  direction: "rising" | "falling" | "stable";
+  value: number;
+  explanation: string;
+  icon_hint: "up" | "down" | "neutral";
+}
+
+export interface NarrationBriefing {
+  executive_summary: string;
+  city_health: number;
+  timestamp: string;
+  trends: TrendExplanation[];
+  key_risks: string[];
+  opportunities: string[];
+}
+
+export interface NarrationRecommendation {
+  id: string;
+  title: string;
+  body: string;
+  priority: "Critical" | "High" | "Strategic" | "Policy";
+  impact: number;
+  confidence: number;
+  category: "Traffic" | "Environment" | "Infrastructure" | "Energy";
+  action_type: "immediate" | "short_term" | "long_term";
+  estimated_benefit: string;
+}
+
+// ─── Timeline ────────────────────────────────────────────────────────────────
+
+export interface YearData {
+  year: number;
+  population_m: number;
+  infra_score: number;
+  traffic_index: number;
+  pollution_index: number;
+  energy_gw: number;
+  sustainability_score: number;
+  ev_pct: number;
+  renewable_pct: number;
+  green_cover_pct: number;
+}
+
+export interface TimelineProjection {
+  start_year: number;
+  end_year: number;
+  data: YearData[];
+  narrative: string;
+}
+
+export interface Scenario {
+  name: string;
+  description: string;
+  color: string;
+  data: YearData[];
+}
+
+export interface ScenarioComparison {
+  scenarios: Scenario[];
+  analysis: string;
+}
+
+export interface Milestone {
+  year: number;
+  title: string;
+  description: string;
+  category: string;
+  impact: "positive" | "negative" | "neutral";
+  icon_hint: string;
+}
