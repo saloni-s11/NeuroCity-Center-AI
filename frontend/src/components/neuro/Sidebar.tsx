@@ -32,8 +32,8 @@ export function AppSidebar() {
   return (
     <aside className="hidden md:flex md:w-64 lg:w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex items-center gap-2 px-6 py-5">
-        <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-foreground text-background">
-          <img src="/assets/logo.png" alt="NeuroCity Logo" className="h-full w-full object-cover" />
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-foreground text-background">
+          <Sparkles className="h-4 w-4" />
         </div>
         <div className="min-w-0">
           <div className="text-sm font-semibold tracking-tight">NeuroCity</div>
