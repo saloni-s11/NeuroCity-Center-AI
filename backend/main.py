@@ -54,3 +54,7 @@ app.include_router(narration_router)
 # Timeline routes: /timeline/projections, /scenarios, /milestones
 from routes.timeline import router as timeline_router
 app.include_router(timeline_router)
+
+# Chat routes: /chat
+from routes.chat import router as chat_router
+app.include_router(chat_router)

@@ -448,6 +448,15 @@ class NarrationRecommendation(BaseModel):
     estimated_benefit: str
 
 
+class ChatRequest(BaseModel):
+    message: str
+
+
+class ChatResponse(BaseModel):
+    reply: str
+
+
+
 # ─── Timeline models ─────────────────────────────────────────────────────────
 
 class YearData(BaseModel):
