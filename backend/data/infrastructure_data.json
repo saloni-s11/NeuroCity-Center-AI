@@ -1,0 +1,22 @@
+[
+  {
+    "asset_id": "INF001",
+    "asset_name": "Bridge A",
+    "type": "Bridge",
+    "sector": "Downtown",
+    "health_score": 82,
+    "status": "Healthy",
+    "risk_level": "Low",
+    "last_inspection": "2026-06-01"
+  },
+  {
+    "asset_id": "INF002",
+    "asset_name": "Substation 7",
+    "type": "Power",
+    "sector": "Industrial Zone",
+    "health_score": 61,
+    "status": "Warning",
+    "risk_level": "High",
+    "last_inspection": "2026-05-22"
+  }
+]
