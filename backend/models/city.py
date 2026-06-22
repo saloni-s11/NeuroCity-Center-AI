@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 class Sector(BaseModel):
@@ -57,7 +57,7 @@ class Prediction(BaseModel):
     description: str
     confidence: int
     tag: str
-    horizon: str          # e.g. "Next 2h", "Tomorrow", "This week"
+    horizon: str
 
 
 class DigitalTwinMetrics(BaseModel):
@@ -83,9 +83,9 @@ class TrafficCorridor(BaseModel):
     capacity: int
     incidents: int
     signal_count: int
-    congestion_index: float       # 0-100 derived
-    congestion_level: str         # Free / Moderate / Heavy / Severe
-    delay_minutes: float          # extra travel time vs free-flow
+    congestion_index: float
+    congestion_level: str
+    delay_minutes: float
 
 
 class HourlyFlow(BaseModel):
@@ -102,21 +102,20 @@ class WeeklyTrend(BaseModel):
 
 
 class TrafficOverview(BaseModel):
-    """GET /traffic — full dataset snapshot"""
     corridors: List[TrafficCorridor]
     hourly_flow: List[HourlyFlow]
     weekly_trend: List[WeeklyTrend]
-    data_source: str              # "simulated" | "tomtom" | "here" — future-proof
+    data_source: str
 
 
 class TrafficKPIs(BaseModel):
     avg_speed_kmh: float
-    congestion_index: float       # city-wide average
+    congestion_index: float
     avg_commute_minutes: float
     active_incidents: int
     corridors_severe: int
     corridors_heavy: int
-    network_efficiency_pct: float # actual throughput / theoretical max
+    network_efficiency_pct: float
 
 
 class TrafficHotspot(BaseModel):
@@ -124,7 +123,7 @@ class TrafficHotspot(BaseModel):
     corridor_name: str
     sector_id: str
     congestion_index: float
-    severity: str                 # Severe / Heavy / Moderate
+    severity: str
     delay_minutes: float
     volume_to_capacity: float
     incidents: int
@@ -141,7 +140,7 @@ class RouteRecommendation(BaseModel):
     recommended_duration_min: float
     time_saving_min: float
     reason: str
-    valid_until: str              # "Next 30 min" etc.
+    valid_until: str
 
 
 class ForecastPoint(BaseModel):
@@ -158,13 +157,12 @@ class TrafficForecast(BaseModel):
     points: List[ForecastPoint]
     peak_hour: str
     peak_congestion_index: float
-    model: str                   # "simulated_wave" | "ml_v1" — future-proof
+    model: str
 
 
 # ─── Environment Intelligence models ─────────────────────────────────────────
 
 class PollutionSector(BaseModel):
-    """Raw reading from pollution_data.json for one sector."""
     sector_id: str
     sector_name: str
     aqi: float
@@ -178,12 +176,10 @@ class PollutionSector(BaseModel):
     humidity: float
     noise_level: float
     wind_speed_kmh: float
-    # derived
-    aqi_status: str      # Good / Moderate / Unhealthy for Sensitive Groups / Unhealthy / Very Unhealthy / Hazardous
+    aqi_status: str
 
 
 class EnvOverview(BaseModel):
-    """GET /environment/overview — city-wide averages."""
     aqi: float
     temperature: float
     humidity: float
@@ -192,11 +188,10 @@ class EnvOverview(BaseModel):
     pm10: float
     noise_level: float
     aqi_status: str
-    data_source: str     # "simulated" | future real provider
+    data_source: str
 
 
 class EnvHotspot(BaseModel):
-    """GET /environment/hotspots — sectors with aqi > 120, sorted desc."""
     sector_id: str
     sector: str
     aqi: float
@@ -204,11 +199,10 @@ class EnvHotspot(BaseModel):
     co2: float
     temperature: float
     aqi_status: str
-    risk_score: float    # 0-100 composite risk
+    risk_score: float
 
 
 class EnvTrendPoint(BaseModel):
-    """One day's aggregated city data — GET /environment/trends."""
     day: str
     aqi: float
     temperature: float
@@ -217,29 +211,115 @@ class EnvTrendPoint(BaseModel):
 
 
 class EnvRisk(BaseModel):
-    """GET /environment/risks — generated risk alerts."""
-    type: str            # Heat Wave / AQI Spike / Carbon / Noise / PM2.5
-    severity: str        # Critical / High / Medium / Low
-    sector: str          # affected sector name or "City-wide"
+    type: str
+    severity: str
+    sector: str
     message: str
-    value: float         # the triggering metric value
-    threshold: float     # the threshold that was crossed
+    value: float
+    threshold: float
 
 
 class EnvForecastItem(BaseModel):
-    """One forecast insight — GET /environment/forecast."""
     title: str
     description: str
     confidence: int
-    tag: str             # AQI / Temperature / CO2 / Humidity / PM2.5
-    horizon: str         # Next 24h / Next 3 days / Next 7 days
-    type: str            # Risk / Opportunity
+    tag: str
+    horizon: str
+    type: str
+
+
+# ─── Infrastructure Intelligence models ──────────────────────────────────────
+
+class InfraAsset(BaseModel):
+    asset_id: str
+    asset_name: str
+    type: str
+    sector: str
+    health_score: float
+    status: str
+    risk_level: str
+    last_inspection: str
+    issue: Optional[str] = None
+
+
+class InfraOverview(BaseModel):
+    health_score: float
+    critical_assets: int
+    warning_assets: int
+    healthy_assets: int
+    total_assets: int
+    maintenance_tasks: int
+    predicted_failures: int
+
+
+class InfraHotspot(BaseModel):
+    asset_id: str
+    asset_name: str
+    type: str
+    sector: str
+    health_score: float
+    status: str
+    risk_level: str
+    issue: Optional[str]
+    failure_risk_pct: float
+
+
+class MaintenanceItem(BaseModel):
+    asset_id: str
+    asset: str
+    type: str
+    sector: str
+    health_score: float
+    priority: str
+    issue: Optional[str]
+    eta: str
+    last_inspection: str
+
+
+class UtilityNetwork(BaseModel):
+    name: str
+    health_pct: float
+    primary_metric_label: str
+    primary_metric_value: float
+    primary_metric_unit: str
+    outages: int
+    efficiency_pct: float
+    detail: str
+
+
+class InfraUtilities(BaseModel):
+    networks: List[UtilityNetwork]
+    power_load_pct: float
+    water_utilization_pct: float
+    streetlights_online_pct: float
+    gas_utilization_pct: float
+    total_outages: int
+
+
+class InfraRisk(BaseModel):
+    severity: str
+    title: str
+    message: str
+    asset_id: str
+    asset_name: str
+    value: float
+    threshold: float
+
+
+class InfraForecastItem(BaseModel):
+    asset_id: str
+    asset: str
+    type: str
+    sector: str
+    prediction: str
+    confidence: int
+    horizon: str
+    recommendation: str
 
 
 # ─── Sustainability models ────────────────────────────────────────────────────
 
 class SectorHealthDetail(BaseModel):
-    """Health score breakdown for a single sector."""
     sector_id: str
     sector_name: str
     health_score: float
@@ -247,22 +327,20 @@ class SectorHealthDetail(BaseModel):
     aqi_score: float
     infra_score: float
     energy_score: float
-    status: str          # Healthy / Warning / Critical
+    status: str
 
 
 class SustainabilityHealthScore(BaseModel):
-    """GET /sustainability/health-score"""
     overall_score: float
-    grade: str                             # A / B / C / D / F
+    grade: str
     description: str
     sector_details: List[SectorHealthDetail]
-    components: dict                       # weighted breakdown
+    components: dict
 
 
 class EnvironmentalMetrics(BaseModel):
-    """GET /sustainability/environmental-metrics"""
     renewable_mix_pct: float
-    carbon_footprint: float               # tonnes CO2 equivalent
+    carbon_footprint: float
     carbon_target: float
     water_efficiency_pct: float
     waste_diversion_pct: float
@@ -270,11 +348,10 @@ class EnvironmentalMetrics(BaseModel):
     ev_penetration_pct: float
     energy_per_capita: float
     aqi_avg: float
-    sustainability_index: float           # composite 0-100
+    sustainability_index: float
 
 
 class MonthlyTrend(BaseModel):
-    """One month's sustainability data point."""
     month: str
     sustainability_score: float
     environmental: float
@@ -284,23 +361,20 @@ class MonthlyTrend(BaseModel):
 
 
 class PillarScore(BaseModel):
-    """Score for one sustainability pillar."""
     name: str
     score: float
     benchmark: float
-    delta: float           # vs benchmark
-    trend: str             # improving / stable / declining
+    delta: float
+    trend: str
 
 
 class PeerCity(BaseModel):
-    """Peer city comparison entry."""
     name: str
     score: float
     rank: int
 
 
 class SustainabilityPerformance(BaseModel):
-    """GET /sustainability/performance"""
     overall_score: float
     trend_12m: List[MonthlyTrend]
     pillars: List[PillarScore]
@@ -311,34 +385,30 @@ class SustainabilityPerformance(BaseModel):
 # ─── Simulation models ───────────────────────────────────────────────────────
 
 class SimulationRequest(BaseModel):
-    """POST /simulation/run — request body."""
-    scenario: str          # population_growth / ev_adoption / renewable_energy / climate_event
-    params: dict           # scenario-specific parameters
+    scenario: str
+    params: dict
 
 
 class SimulationImpact(BaseModel):
-    """One impact metric from a simulation."""
     label: str
     value: float
     unit: str
-    delta_pct: float       # % change from baseline
-    tone: str              # positive / negative / neutral
+    delta_pct: float
+    tone: str
 
 
 class SimulationResult(BaseModel):
-    """POST /simulation/run — response."""
     scenario: str
     scenario_label: str
     params: dict
     impacts: List[SimulationImpact]
     narrative: str
-    risk_level: str        # Low / Medium / High / Critical
+    risk_level: str
     confidence: int
     recommendations: List[str]
 
 
 class SimulationPreset(BaseModel):
-    """One preset scenario configuration."""
     id: str
     name: str
     description: str
@@ -350,16 +420,14 @@ class SimulationPreset(BaseModel):
 # ─── Narration models ────────────────────────────────────────────────────────
 
 class TrendExplanation(BaseModel):
-    """One trend explained in plain language."""
     metric: str
-    direction: str         # rising / falling / stable
+    direction: str
     value: float
     explanation: str
-    icon_hint: str         # up / down / neutral
+    icon_hint: str
 
 
 class NarrationBriefing(BaseModel):
-    """GET /narration/briefing"""
     executive_summary: str
     city_health: float
     timestamp: str
@@ -369,22 +437,20 @@ class NarrationBriefing(BaseModel):
 
 
 class NarrationRecommendation(BaseModel):
-    """One AI recommendation."""
     id: str
     title: str
     body: str
-    priority: str          # Critical / High / Strategic / Policy
-    impact: int            # 0-100
-    confidence: int        # 0-100
-    category: str          # Traffic / Environment / Infrastructure / Energy
-    action_type: str       # immediate / short_term / long_term
+    priority: str
+    impact: int
+    confidence: int
+    category: str
+    action_type: str
     estimated_benefit: str
 
 
 # ─── Timeline models ─────────────────────────────────────────────────────────
 
 class YearData(BaseModel):
-    """Projected metrics for one year."""
     year: int
     population_m: float
     infra_score: float
@@ -398,7 +464,6 @@ class YearData(BaseModel):
 
 
 class TimelineProjection(BaseModel):
-    """GET /timeline/projections"""
     start_year: int
     end_year: int
     data: List[YearData]
@@ -406,7 +471,6 @@ class TimelineProjection(BaseModel):
 
 
 class Scenario(BaseModel):
-    """One named scenario trajectory."""
     name: str
     description: str
     color: str
@@ -414,16 +478,14 @@ class Scenario(BaseModel):
 
 
 class ScenarioComparison(BaseModel):
-    """GET /timeline/scenarios"""
     scenarios: List[Scenario]
     analysis: str
 
 
 class Milestone(BaseModel):
-    """A projected milestone event."""
     year: int
     title: str
     description: str
-    category: str          # population / infrastructure / environment / energy
-    impact: str            # positive / negative / neutral
+    category: str
+    impact: str
     icon_hint: str
